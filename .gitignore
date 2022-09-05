@@ -233,4 +233,4 @@ _Pvt_Extensions
 
 # Data base and Migration file
 Migrations/
-*.db
+*.db*

@@ -28,6 +28,22 @@ namespace react_web.Controllers
             return await _context.TodoLists.ToListAsync();
         }
 
+        // GET: api/TodoList/InProgress
+        [HttpGet("InProgress")]
+        public async Task<ActionResult<IEnumerable<TodoList>>> GetTodoListsInProgress()
+        {
+            var todoList = from s in _context.TodoLists select s;
+            return await todoList.Where(s => s.Status == true).ToListAsync();
+        }
+
+        // GET: api/TodoList/NotInProgress
+        [HttpGet("NotInProgress")]
+        public async Task<ActionResult<IEnumerable<TodoList>>> GetTodoListsNotInProgress()
+        {
+            var todoList = from s in _context.TodoLists select s;
+            return await todoList.Where(s => s.Status == false).ToListAsync();
+        }
+
         // GET: api/TodoList/5
         [HttpGet("{id}")]
         public async Task<ActionResult<TodoList>> GetTodoList(int id)
