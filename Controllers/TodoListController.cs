@@ -28,20 +28,38 @@ namespace react_web.Controllers
             return await _context.TodoLists.ToListAsync();
         }
 
+        public static IEnumerable<CardBoard> MapTodoListtoCard(IEnumerable<TodoList> list_todolist){
+            List<CardBoard> list_card = new List<CardBoard>();
+            List<TodoList> todolists = list_todolist.ToList();
+            for (int i = 0; i < todolists.Count; i++)
+            {
+                list_card.Add(new CardBoard{
+                    id = $"Card{todolists[i].Id+1}",
+                    title = todolists[i].Title,
+                    description = todolists[i].ReleaseDate.ToString("dd/MM/yyyy HH:mm:ss"),
+                    draggable = true,
+                    metadata = todolists[i]
+                });
+            }
+            return list_card;
+        }
+
         // GET: api/TodoList/InProgress
         [HttpGet("InProgress")]
-        public async Task<ActionResult<IEnumerable<TodoList>>> GetTodoListsInProgress()
+        public async Task<ActionResult<IEnumerable<CardBoard>>> GetTodoListsInProgress()
         {
-            var todoList = from s in _context.TodoLists select s;
-            return await todoList.Where(s => s.Status == true).ToListAsync();
+            var todoList_model = from s in _context.TodoLists select s;
+            var todoLists = await todoList_model.Where(s => s.Status == true).ToListAsync();
+            return MapTodoListtoCard(todoLists).ToArray();
         }
 
         // GET: api/TodoList/NotInProgress
         [HttpGet("NotInProgress")]
-        public async Task<ActionResult<IEnumerable<TodoList>>> GetTodoListsNotInProgress()
+        public async Task<ActionResult<IEnumerable<CardBoard>>> GetTodoListsNotInProgress()
         {
-            var todoList = from s in _context.TodoLists select s;
-            return await todoList.Where(s => s.Status == false).ToListAsync();
+            var todoList_model = from s in _context.TodoLists select s;
+            var todoLists = await todoList_model.Where(s => s.Status == false).ToListAsync();
+            return MapTodoListtoCard(todoLists).ToArray();
         }
 
         // GET: api/TodoList/5
