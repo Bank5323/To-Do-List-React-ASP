@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
+
+using react_web.Models;
+using react_web.Data;
 
 namespace react_web
 {
@@ -28,6 +32,10 @@ namespace react_web
             {
                 configuration.RootPath = "ClientApp/build";
             });
+
+            // To generated database context class and registration
+            services.AddDbContext<TodoListContext>(opt => 
+            opt.UseSqlite(Configuration.GetConnectionString("TodoListContext")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
