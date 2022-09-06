@@ -28,9 +28,31 @@ export class TodoList extends Component {
         }
       ]
     }
+
+    const clickevent = (cardId, metadata, laneId) => {
+      window.alert(metadata.title);
+    }
+
+    const dragchange = async (cardId, sourceLaneId, targetLaneId, position, cardDetails) => {
+      if(sourceLaneId !== targetLaneId){
+        var todoitem = cardDetails.metadata;
+        todoitem.status = !todoitem.status;
+
+        var api_url = "api/TodoList/"+todoitem.id;
+        const requestOpt = {
+          method: 'PUT',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(todoitem)
+        };
+        await fetch(api_url,requestOpt);
+      }
+    }
+
     return <Board
       data={data}
       style={{backgroundColor: '#fff'}}
+      onCardClick={clickevent}
+      handleDragEnd={dragchange}
     />;
   }
 
