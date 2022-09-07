@@ -33,10 +33,16 @@ export class TodoList extends Component {
       window.alert(metadata.title);
     }
 
+    const updateevent = (newData) => {
+      window.alert(newData.title);
+      console.log(newData);
+    }
+
     const dragchange = async (cardId, sourceLaneId, targetLaneId, position, cardDetails) => {
       if(sourceLaneId !== targetLaneId){
         var todoitem = cardDetails.metadata;
         todoitem.status = !todoitem.status;
+        cardDetails.metadata.status = todoitem.status;
 
         var api_url = "api/TodoList/"+todoitem.id;
         const requestOpt = {
@@ -53,6 +59,7 @@ export class TodoList extends Component {
       style={{backgroundColor: '#fff'}}
       onCardClick={clickevent}
       handleDragEnd={dragchange}
+      onDataChange={updateevent}
     />;
   }
 

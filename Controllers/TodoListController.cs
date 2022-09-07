@@ -34,7 +34,7 @@ namespace react_web.Controllers
             for (int i = 0; i < todolists.Count; i++)
             {
                 list_card.Add(new CardBoard{
-                    id = $"Card{i+1}",
+                    id = $"Card{todolists[i].Id}",
                     title = todolists[i].Title,
                     description = todolists[i].ReleaseDate.ToString("dd/MM/yyyy HH:mm:ss"),
                     draggable = true,
