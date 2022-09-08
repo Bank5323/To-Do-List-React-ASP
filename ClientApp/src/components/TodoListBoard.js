@@ -1,72 +1,54 @@
 import React, { Component } from 'react';
 import Board from 'react-trello';
+import update from 'immutability-helper'
 
 export class TodoList extends Component {
   static displayName = TodoList.name;
 
   constructor(props) {
     super(props);
-    this.state = { todoinprogress: [], todonotinprogress: [], loading: true };
+    this.state = {draggedData: [], boardData: [], loading: true };
   }
 
   componentDidMount() {
     this.populateTodoListData();
   }
 
-  static renderTodoListTable(todonotinprogress, todoinprogress) {
-    const data = {
-      lanes: [
-        {
-          id: 'lane1',
-          title: 'Task',
-          cards: todonotinprogress
-        },
-        {
-          id : 'lane2',
-          title: 'In Progress',
-          cards: todoinprogress
-        }
-      ]
-    }
+  updataTodoitemAPI = (todoListID, metadata) =>{
+    var api_url = "api/TodoList/"+todoListID;
+    const requestOpt = {
+      method: 'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(metadata)
+    };
+    fetch(api_url,requestOpt);
+  }
 
-    const clickevent = (cardId, metadata, laneId) => {
-      window.alert(metadata.title);
-    }
+  updateBoard = newData => {
+    this.setState({draggedData: newData});
+  }
 
-    const updateevent = (newData) => {
-      window.alert(newData.title);
-      console.log(newData);
-    }
+  onDragEnd = (cardId, sourceLandId, targetLaneId, card) => {
+    const {draggedData} = this.state;
+    const laneIndex = draggedData.lanes.findIndex(lane => lane.id === sourceLandId);
+    const cardIndex = draggedData.lanes[laneIndex].cards.findIndex(card => card.id === cardId);
+    var metaDatacard = draggedData.lanes[laneIndex].cards[cardIndex].metadata;
+    metaDatacard.status = !metaDatacard.status;
+    const updatedData = update(draggedData, {lanes: {[laneIndex]: {cards: {[cardIndex]: {metadata: {$set: metaDatacard}}}}}});
 
-    const dragchange = async (cardId, sourceLaneId, targetLaneId, position, cardDetails) => {
-      if(sourceLaneId !== targetLaneId){
-        var todoitem = cardDetails.metadata;
-        todoitem.status = !todoitem.status;
-        cardDetails.metadata.status = todoitem.status;
-
-        var api_url = "api/TodoList/"+todoitem.id;
-        const requestOpt = {
-          method: 'PUT',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(todoitem)
-        };
-        await fetch(api_url,requestOpt);
-      }
-    }
-
-    return <Board
-      data={data}
-      style={{backgroundColor: '#fff'}}
-      onCardClick={clickevent}
-      handleDragEnd={dragchange}
-      onDataChange={updateevent}
-    />;
+    this.updataTodoitemAPI(metaDatacard.id,metaDatacard);
+    this.setState({boardData: updatedData});
   }
 
   render() {
     let contents = this.state.loading
       ? <p><em>Loading...</em></p>
-      : TodoList.renderTodoListTable(this.state.todonotinprogress, this.state.todoinprogress);
+      : <Board
+      data={this.state.boardData}
+      style={{backgroundColor: '#fff'}}
+      onDataChange={this.updateBoard}
+      handleDragEnd={this.onDragEnd}
+    />;
 
     return (
       <div>
@@ -82,8 +64,23 @@ export class TodoList extends Component {
     const data_inprogress = await response_in.json();
     const response = await fetch('api/todolist/notinprogress');
     const data_notinprogress = await response.json();
-    this.setState({ todoinprogress: data_inprogress,
-       todonotinprogress: data_notinprogress,
+
+    const data = {
+      lanes: [
+        {
+          id: 'lane1',
+          title: 'Task',
+          cards: data_notinprogress
+        },
+        {
+          id : 'lane2',
+          title: 'In Progress',
+          cards: data_inprogress
+        }
+      ]
+    }
+
+    this.setState({ boardData: data,
         loading: false });
   }
 }
