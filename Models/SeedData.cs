@@ -23,9 +23,10 @@ namespace react_web.Models
                 context.TodoLists.AddRange(
                     new TodoList
                     {
-                        Title = "Hello World.",
-                        ReleaseDate = DateTime.Now,
-                        Status = true
+                        id = "0000000000000000",
+                        title = "Hello World.",
+                        description = "First Card.",
+                        state = false
                     }
                 );
                 context.SaveChanges();

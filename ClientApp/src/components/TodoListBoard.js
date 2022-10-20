@@ -14,12 +14,23 @@ export class TodoList extends Component {
     this.populateTodoListData();
   }
 
-  updataTodoitemAPI = (todoListID, metadata) =>{
-    var api_url = "api/TodoList/"+todoListID;
+  updataTodoitemAPI = (cardID, card) =>{
+    var api_url = "api/TodoList/"+cardID;
     const requestOpt = {
       method: 'PUT',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(metadata)
+      body: JSON.stringify(card)
+    };
+    fetch(api_url,requestOpt);
+  }
+
+  adddataTodotiemAPI = (card) => {
+    var api_url = "api/TodoList";
+    console.log(card);
+    const requestOpt = {
+      method: 'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(card)
     };
     fetch(api_url,requestOpt);
   }
@@ -32,12 +43,25 @@ export class TodoList extends Component {
     const {draggedData} = this.state;
     const laneIndex = draggedData.lanes.findIndex(lane => lane.id === sourceLandId);
     const cardIndex = draggedData.lanes[laneIndex].cards.findIndex(card => card.id === cardId);
-    var metaDatacard = draggedData.lanes[laneIndex].cards[cardIndex].metadata;
-    metaDatacard.status = !metaDatacard.status;
-    const updatedData = update(draggedData, {lanes: {[laneIndex]: {cards: {[cardIndex]: {metadata: {$set: metaDatacard}}}}}});
+    var metaDatacard = draggedData.lanes[laneIndex].cards[cardIndex];
+    metaDatacard.state = !metaDatacard.state;
+    console.log(metaDatacard);
+    const updatedData = update(draggedData, {lanes: {[laneIndex]: {cards: {[cardIndex]: {$set: metaDatacard}}}}});
 
     this.updataTodoitemAPI(metaDatacard.id,metaDatacard);
     this.setState({boardData: updatedData});
+  }
+
+  onCardAdd = (card, laneId) => {
+    if (laneId === "lane1"){
+      card.state = false
+    }else{
+      card.state = true
+    }
+    this.adddataTodotiemAPI(card);
+  }
+  onCardDelete = (cardId, laneId) => {
+    fetch('api/todolist/'+cardId,{method: 'DELETE'});
   }
 
   render() {
@@ -48,6 +72,11 @@ export class TodoList extends Component {
       style={{backgroundColor: '#fff'}}
       onDataChange={this.updateBoard}
       handleDragEnd={this.onDragEnd}
+      onCardAdd={this.onCardAdd}
+      onCardDelete={this.onCardDelete}
+      draggable={true}
+      editable={true}
+      components={{AddCardLink: ({onClick, t}) => <button onClick={onClick}>{t('Click to add card')}</button>}}
     />;
 
     return (
