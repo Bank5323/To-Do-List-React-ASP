@@ -7,7 +7,7 @@ export class TodoList extends Component {
 
   constructor(props) {
     super(props);
-    this.state = {draggedData: [], boardData: [], loading: true };
+    this.state = { boardData: [], loading: true, isCreate: false, tmpCreate: []};
   }
 
   componentDidMount() {
@@ -26,7 +26,6 @@ export class TodoList extends Component {
 
   adddataTodotiemAPI = (card) => {
     var api_url = "api/TodoList";
-    console.log(card);
     const requestOpt = {
       method: 'POST',
       headers:{'Content-Type':'application/json'},
@@ -36,30 +35,45 @@ export class TodoList extends Component {
   }
 
   updateBoard = newData => {
-    this.setState({draggedData: newData});
+    console.log(newData);
+    console.log(this.state);
+    this.setState({boardData: newData});
+    if(this.state.isCreate === true){
+      this.updateCreate(this.state.tmpCreate);
+    }
   }
 
-  onDragEnd = (cardId, sourceLandId, targetLaneId, card) => {
-    const {draggedData} = this.state;
-    const laneIndex = draggedData.lanes.findIndex(lane => lane.id === sourceLandId);
-    const cardIndex = draggedData.lanes[laneIndex].cards.findIndex(card => card.id === cardId);
-    var metaDatacard = draggedData.lanes[laneIndex].cards[cardIndex];
-    metaDatacard.state = !metaDatacard.state;
-    console.log(metaDatacard);
-    const updatedData = update(draggedData, {lanes: {[laneIndex]: {cards: {[cardIndex]: {$set: metaDatacard}}}}});
-
-    this.updataTodoitemAPI(metaDatacard.id,metaDatacard);
-    this.setState({boardData: updatedData});
+  updateCreate = () =>{
+    const {boardData} = this.state;
+    const laneIndex = boardData.lanes.findIndex(lane => lane.id === this.state.tmpCreate.laneId);
+    const cardIndex = boardData.lanes[laneIndex].cards.findIndex(card => card.id === this.state.tmpCreate.cardId);
+    const updatedData = update(boardData, {lanes: {[laneIndex]: {cards: {[cardIndex]: {$set: this.state.tmpCreate.card}}}}});
+    this.setState({boardData: updatedData, isCreate: false, tmpCreate: []});
   }
 
   onCardAdd = (card, laneId) => {
+    var cardId = card.id;
+    card.state = true;
     if (laneId === "lane1"){
-      card.state = false
-    }else{
-      card.state = true
+      card.state = false;
     }
     this.adddataTodotiemAPI(card);
+    this.setState({isCreate: true, tmpCreate: {cardId: cardId, laneId: laneId, card: card}});
   }
+
+  onDragEnd = (cardId, sourceLandId, targetLaneId) => {
+    if(sourceLandId !== targetLaneId){
+      const {boardData} = this.state;
+      const laneIndex = boardData.lanes.findIndex(lane => lane.id === sourceLandId);
+      const cardIndex = boardData.lanes[laneIndex].cards.findIndex(card => card.id === cardId);
+      var card = boardData.lanes[laneIndex].cards[cardIndex];
+      card.state = !card.state;
+      const updatedData = update(boardData, {lanes: {[laneIndex]: {cards: {[cardIndex]: {$set: card}}}}});
+      this.updataTodoitemAPI(cardId,card);
+      this.setState({boardData: updatedData});
+    }
+  }
+
   onCardDelete = (cardId, laneId) => {
     fetch('api/todolist/'+cardId,{method: 'DELETE'});
   }
