@@ -28,43 +28,9 @@ namespace react_web.Controllers
             return await _context.TodoLists.ToListAsync();
         }
 
-        public static IEnumerable<CardBoard> MapTodoListtoCard(IEnumerable<TodoList> list_todolist){
-            List<CardBoard> list_card = new List<CardBoard>();
-            List<TodoList> todolists = list_todolist.ToList();
-            for (int i = 0; i < todolists.Count; i++)
-            {
-                list_card.Add(new CardBoard{
-                    id = $"Card{todolists[i].Id}",
-                    title = todolists[i].Title,
-                    description = todolists[i].ReleaseDate.ToString("dd/MM/yyyy HH:mm:ss"),
-                    draggable = true,
-                    metadata = todolists[i]
-                });
-            }
-            return list_card;
-        }
-
-        // GET: api/TodoList/InProgress
-        [HttpGet("InProgress")]
-        public async Task<ActionResult<IEnumerable<CardBoard>>> GetTodoListsInProgress()
-        {
-            var todoList_model = from s in _context.TodoLists select s;
-            var todoLists = await todoList_model.Where(s => s.Status == true).ToListAsync();
-            return MapTodoListtoCard(todoLists).ToArray();
-        }
-
-        // GET: api/TodoList/NotInProgress
-        [HttpGet("NotInProgress")]
-        public async Task<ActionResult<IEnumerable<CardBoard>>> GetTodoListsNotInProgress()
-        {
-            var todoList_model = from s in _context.TodoLists select s;
-            var todoLists = await todoList_model.Where(s => s.Status == false).ToListAsync();
-            return MapTodoListtoCard(todoLists).ToArray();
-        }
-
         // GET: api/TodoList/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<TodoList>> GetTodoList(int id)
+        public async Task<ActionResult<TodoList>> GetTodoList(string id)
         {
             var todoList = await _context.TodoLists.FindAsync(id);
 
@@ -79,9 +45,9 @@ namespace react_web.Controllers
         // PUT: api/TodoList/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTodoList(int id, TodoList todoList)
+        public async Task<IActionResult> PutTodoList(string id, TodoList todoList)
         {
-            if (id != todoList.Id)
+            if (id != todoList.id)
             {
                 return BadRequest();
             }
@@ -113,14 +79,28 @@ namespace react_web.Controllers
         public async Task<ActionResult<TodoList>> PostTodoList(TodoList todoList)
         {
             _context.TodoLists.Add(todoList);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                if (TodoListExists(todoList.id))
+                {
+                    return Conflict();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
-            return CreatedAtAction("GetTodoList", new { id = todoList.Id }, todoList);
+            return CreatedAtAction("GetTodoList", new { id = todoList.id }, todoList);
         }
 
         // DELETE: api/TodoList/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTodoList(int id)
+        public async Task<IActionResult> DeleteTodoList(string id)
         {
             var todoList = await _context.TodoLists.FindAsync(id);
             if (todoList == null)
@@ -134,9 +114,25 @@ namespace react_web.Controllers
             return NoContent();
         }
 
-        private bool TodoListExists(int id)
+        private bool TodoListExists(string id)
         {
-            return _context.TodoLists.Any(e => e.Id == id);
+            return _context.TodoLists.Any(e => e.id == id);
+        }
+
+        // method other
+        // GET: api/TodoList/InProgress
+        [HttpGet("InProgress")]
+        public async Task<ActionResult<IEnumerable<TodoList>>> GetTodoListsInProgress()
+        {
+            var todoList_model = from s in _context.TodoLists select s;
+            return await todoList_model.Where(s => s.state == true).ToListAsync();
+        }
+        // GET: api/TodoList/NotInProgress
+        [HttpGet("NotInProgress")]
+        public async Task<ActionResult<IEnumerable<TodoList>>> GetTodoListsNotInProgress()
+        {
+            var todoList_model = from s in _context.TodoLists select s;
+            return await todoList_model.Where(s => s.state == false).ToListAsync();
         }
     }
 }

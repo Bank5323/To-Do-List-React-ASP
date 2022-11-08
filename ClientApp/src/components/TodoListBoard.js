@@ -7,37 +7,73 @@ export class TodoList extends Component {
 
   constructor(props) {
     super(props);
-    this.state = {draggedData: [], boardData: [], loading: true };
+    this.state = { boardData: [], loading: true, isCreate: false, tmpCreate: []};
   }
 
   componentDidMount() {
     this.populateTodoListData();
   }
 
-  updataTodoitemAPI = (todoListID, metadata) =>{
-    var api_url = "api/TodoList/"+todoListID;
+  updataTodoitemAPI = (cardID, card) =>{
+    var api_url = "api/TodoList/"+cardID;
     const requestOpt = {
       method: 'PUT',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(metadata)
+      body: JSON.stringify(card)
+    };
+    fetch(api_url,requestOpt);
+  }
+
+  adddataTodotiemAPI = (card) => {
+    var api_url = "api/TodoList";
+    const requestOpt = {
+      method: 'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(card)
     };
     fetch(api_url,requestOpt);
   }
 
   updateBoard = newData => {
-    this.setState({draggedData: newData});
+    this.setState({boardData: newData});
+    if(this.state.isCreate === true){
+      this.updateCreate(this.state.tmpCreate);
+    }
   }
 
-  onDragEnd = (cardId, sourceLandId, targetLaneId, card) => {
-    const {draggedData} = this.state;
-    const laneIndex = draggedData.lanes.findIndex(lane => lane.id === sourceLandId);
-    const cardIndex = draggedData.lanes[laneIndex].cards.findIndex(card => card.id === cardId);
-    var metaDatacard = draggedData.lanes[laneIndex].cards[cardIndex].metadata;
-    metaDatacard.status = !metaDatacard.status;
-    const updatedData = update(draggedData, {lanes: {[laneIndex]: {cards: {[cardIndex]: {metadata: {$set: metaDatacard}}}}}});
+  updateCreate = () =>{
+    const {boardData} = this.state;
+    const laneIndex = boardData.lanes.findIndex(lane => lane.id === this.state.tmpCreate.laneId);
+    const cardIndex = boardData.lanes[laneIndex].cards.findIndex(card => card.id === this.state.tmpCreate.cardId);
+    const updatedData = update(boardData, {lanes: {[laneIndex]: {cards: {[cardIndex]: {$set: this.state.tmpCreate.card}}}}});
+    this.setState({boardData: updatedData, isCreate: false, tmpCreate: []});
+  }
 
-    this.updataTodoitemAPI(metaDatacard.id,metaDatacard);
-    this.setState({boardData: updatedData});
+  onCardAdd = (card, laneId) => {
+    var cardId = card.id;
+    card.state = true;
+    if (laneId === "lane1"){
+      card.state = false;
+    }
+    this.adddataTodotiemAPI(card);
+    this.setState({isCreate: true, tmpCreate: {cardId: cardId, laneId: laneId, card: card}});
+  }
+
+  onDragEnd = (cardId, sourceLandId, targetLaneId) => {
+    if(sourceLandId !== targetLaneId){
+      const {boardData} = this.state;
+      const laneIndex = boardData.lanes.findIndex(lane => lane.id === sourceLandId);
+      const cardIndex = boardData.lanes[laneIndex].cards.findIndex(card => card.id === cardId);
+      var card = boardData.lanes[laneIndex].cards[cardIndex];
+      card.state = !card.state;
+      const updatedData = update(boardData, {lanes: {[laneIndex]: {cards: {[cardIndex]: {$set: card}}}}});
+      this.updataTodoitemAPI(cardId,card);
+      this.setState({boardData: updatedData});
+    }
+  }
+
+  onCardDelete = (cardId, laneId) => {
+    fetch('api/todolist/'+cardId,{method: 'DELETE'});
   }
 
   render() {
@@ -48,6 +84,12 @@ export class TodoList extends Component {
       style={{backgroundColor: '#fff'}}
       onDataChange={this.updateBoard}
       handleDragEnd={this.onDragEnd}
+      onCardAdd={this.onCardAdd}
+      onCardDelete={this.onCardDelete}
+      laneDraggable={false}
+      draggable={true}
+      editable={true}
+      components={{AddCardLink: ({onClick, t}) => <button onClick={onClick}>{t('Click to add card')}</button>}}
     />;
 
     return (
