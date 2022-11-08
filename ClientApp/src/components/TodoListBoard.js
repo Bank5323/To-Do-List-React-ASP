@@ -35,8 +35,6 @@ export class TodoList extends Component {
   }
 
   updateBoard = newData => {
-    console.log(newData);
-    console.log(this.state);
     this.setState({boardData: newData});
     if(this.state.isCreate === true){
       this.updateCreate(this.state.tmpCreate);
@@ -88,6 +86,7 @@ export class TodoList extends Component {
       handleDragEnd={this.onDragEnd}
       onCardAdd={this.onCardAdd}
       onCardDelete={this.onCardDelete}
+      laneDraggable={false}
       draggable={true}
       editable={true}
       components={{AddCardLink: ({onClick, t}) => <button onClick={onClick}>{t('Click to add card')}</button>}}
