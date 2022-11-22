@@ -76,6 +76,18 @@ export class TodoList extends Component {
     fetch('api/todolist/'+cardId,{method: 'DELETE'});
   }
 
+  onCardUpdate = (laneId, data) =>{
+    const listKey = Object.keys(data);
+    const cardId = data['id'];
+    const field = listKey.filter(key => key !== "id")[0];
+    const {boardData} = this.state;
+    const laneIndex = boardData.lanes.findIndex(lane => lane.id === laneId);
+    const cardIndex = boardData.lanes[laneIndex].cards.findIndex(card => card.id === cardId);
+    var card = boardData.lanes[laneIndex].cards[cardIndex];
+    card[field] = data[field];
+    this.updataTodoitemAPI(cardId,card);
+  }
+
   render() {
     let contents = this.state.loading
       ? <p><em>Loading...</em></p>
@@ -86,6 +98,7 @@ export class TodoList extends Component {
       handleDragEnd={this.onDragEnd}
       onCardAdd={this.onCardAdd}
       onCardDelete={this.onCardDelete}
+      onCardUpdate={this.onCardUpdate}
       laneDraggable={false}
       draggable={true}
       editable={true}
@@ -95,7 +108,6 @@ export class TodoList extends Component {
     return (
       <div>
         <h1 id="tabelLabel" >TodoList Item</h1>
-        <p>This component demonstrates fetching data from the server.</p>
         {contents}
       </div>
     );
@@ -117,7 +129,8 @@ export class TodoList extends Component {
         {
           id : 'lane2',
           title: 'In Progress',
-          cards: data_inprogress
+          cards: data_inprogress,
+          disallowAddingCard: true
         }
       ]
     }
